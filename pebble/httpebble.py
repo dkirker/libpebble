@@ -34,6 +34,9 @@ HTTP_LATITUDE_KEY = 0xFFE1
 HTTP_LONGITUDE_KEY = 0xFFE2
 HTTP_ALTITUDE_KEY = 0xFFE3
 
+#Not yet standard.
+HTTP_FRAMEBUFFER_SLICE = 0xFFF9
+
 class HTTPebble(bridge.PebbleBridge):
 	UUID = uuid.UUID(bytes="\x91\x41\xB6\x28\xBC\x89\x49\x8E\xB1\x47\x04\x9F\x49\xC0\x99\xAD")
 
@@ -45,6 +48,16 @@ class HTTPebble(bridge.PebbleBridge):
 		'i': ('INT', 'i'),
 		'I': ('UINT', 'I')
 	}
+
+	def request_screenshot(self):
+		vals = [
+			(HTTP_FRAMEBUFFER_SLICE, "UINT", pack("<B", 1))
+		]
+
+		tuples = [AppMessage.construct_tuple(*x) for x in vals]
+		#TODO: Global transaction counter?
+		msg = AppMessage.construct_message(AppMessage.construct_dict(tuples), "PUSH", self.UUID.bytes, "\x10")
+		self._pebble._send_message("APPLICATION_MESSAGE", msg)
 
 	def http_url_key(self, uri, parameters):
 		#Strip type information
@@ -244,6 +257,10 @@ class HTTPebble(bridge.PebbleBridge):
 					code = msg_dict[k]
 			else:
 				parameters[k] = msg_dict[k]
+
+		if command is None:
+			log.error("Command could not be identified, is one of: %s" % ", ".join([hex(x) for x in parameters.keys()]))
+			return
 
 		for p in parameters:
 			log.info("    %s: %s" % (p, repr(parameters[p])))

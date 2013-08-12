@@ -146,6 +146,18 @@ def cmd_httpebble(pebble, args):
     except KeyboardInterrupt:
         return
 
+def cmd_httpebble_screenshot(pebble, args):
+    import pebble.httpebble as httpebble
+    log.info('Installing HTTPebble...')
+    pebble.install_bridge(httpebble.HTTPebble)
+    log.info('Waiting for HTTPebble commands...')
+    try:
+        while True:
+            time.sleep(4)
+            log.info('Sending HTTPebble screenshot command...')
+            pebble.bridges[httpebble.HTTPebble.UUID].request_screenshot() 
+    except KeyboardInterrupt:
+        return
 
 def main():
     parser = argparse.ArgumentParser(description='a utility belt for pebble development')
@@ -247,6 +259,8 @@ def main():
     httpebble_parser = subparsers.add_parser('httpebble', help='process httpebble commands sent from the watch')
     httpebble_parser.set_defaults(func=cmd_httpebble)
 
+    httpebble_parser = subparsers.add_parser('httpebble_screenshot', help='take a screenshot and process httpebble commands sent from the watch')
+    httpebble_parser.set_defaults(func=cmd_httpebble_screenshot)
 
     args = parser.parse_args()
 

@@ -820,7 +820,9 @@ class Pebble(object):
 
 	def _application_message_response(self, endpoint, data):
 
-		if data[0] == b'\x01': #PUSH
+		command = data[0]
+
+		if command == b'\x01': #PUSH
 			(command, transaction, app_uuid, msg_dict) = AppMessage.read_message(data)
 
 			log.debug("ACKing transaction %x" % ord(transaction))
@@ -833,7 +835,21 @@ class Pebble(object):
 					self._send_message("APPLICATION_MESSAGE", msg)
 			else:
 				log.warn("Got app message for %s and no bridge was found" % app_uuid)
+		elif command == b'\x02': #REQUEST:
+			log.warn("Got app request; not yet implemented; NACKing")
+			transaction = data[1]
+			self._send_message("APPLICATION_MESSAGE", "\x7F%s" % transaction)
+		elif command == b'\x7F': #NACK
+			transaction = data[1]
+			log.warn("Pebble NACKed transaction %x" % ord(transaction))
+		elif command == b'\xFF': #ACK
+			transaction = data[1]
+			log.debug("Pebble ACKed transaction %x" % ord(transaction))
+		else:
+			log.error("Unknown command type %x" % ord(command))
+		
 
+		#TODO: Old, untouched, code. Remove?
 		if len(data) > 1:
 			rest = data[1:]
 		else:
