@@ -6,6 +6,11 @@ import pebble as libpebble
 import subprocess
 import sys
 import time
+import logging
+
+log = logging.getLogger()
+logging.basicConfig(format='[%(levelname)-8s] %(message)s')
+log.setLevel(logging.DEBUG)
 
 MAX_ATTEMPTS = 5
 
@@ -42,7 +47,7 @@ def cmd_remote(pebble, args):
         try:
             return subprocess.check_output(cmd, shell=True)
         except subprocess.CalledProcessError:
-            print "Failed to send message to "+args.app_name+", is it running?"
+            log.error("Failed to send message to %s, is it running?" % args.app_name)
             return False
 
     def music_control_handler(endpoint, resp):
@@ -66,7 +71,7 @@ def cmd_remote(pebble, args):
 
     pebble.register_endpoint("MUSIC_CONTROL", music_control_handler)
 
-    print 'waiting for music control events'
+    log.info('waiting for music control events')
     try:
         while True:
             update_metadata()
@@ -75,7 +80,7 @@ def cmd_remote(pebble, args):
         return
 
 def cmd_logcat(pebble, args):
-    print 'listening for logs...'
+    log.info('listening for logs...')
     try:
         while True:
             time.sleep(1)
@@ -95,7 +100,7 @@ def cmd_rm_app(pebble, args):
         uuid = args.app_index_or_hex_uuid.decode('hex')
         if len(uuid) == 16:
             pebble.remove_app_by_uuid(uuid, uuid_is_string=False)
-            print 'removed app'
+            log.info('removed app')
             return 0
     except:
         pass
@@ -104,10 +109,10 @@ def cmd_rm_app(pebble, args):
         for app in pebble.get_appbank_status()['apps']:
             if app['index'] == idx:
                 pebble.remove_app(app["id"], app["index"])
-                print 'removed app'
+                log.info('removed app')
                 return 0
     except:
-        print 'Invalid arguments. Use bank index or hex app UUID (16 bytes / 32 hex digits)'
+        log.error('Invalid arguments. Use bank index or hex app UUID (16 bytes / 32 hex digits)')
 
 def cmd_reinstall_app(pebble, args):
     pebble.reinstall_app(args.app_bundle, args.nolaunch)
@@ -129,6 +134,18 @@ def cmd_get_time(pebble, args):
 
 def cmd_set_time(pebble, args):
     pebble.set_time(args.timestamp)
+
+def cmd_httpebble(pebble, args):
+    import pebble.httpebble as httpebble
+    log.info('Installing HTTPebble...')
+    pebble.install_bridge(httpebble.HTTPebble)
+    log.info('Waiting for HTTPebble commands...')
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        return
+
 
 def main():
     parser = argparse.ArgumentParser(description='a utility belt for pebble development')
@@ -227,6 +244,9 @@ def main():
     remote_parser.add_argument('app_name', type=str, help='title of application to be controlled')
     remote_parser.set_defaults(func=cmd_remote)
 
+    httpebble_parser = subparsers.add_parser('httpebble', help='process httpebble commands sent from the watch')
+    httpebble_parser.set_defaults(func=cmd_httpebble)
+
 
     args = parser.parse_args()
 
@@ -238,6 +258,8 @@ def main():
             pebble_id = args.pebble_id
             if pebble_id is None and "PEBBLE_ID" in os.environ:
                 pebble_id = os.environ["PEBBLE_ID"]
+                if ":" in pebble_id:
+                    args.lightblue = True
             pebble = libpebble.Pebble(pebble_id, args.lightblue, args.pair)
             break
         except:
