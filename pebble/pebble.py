@@ -26,7 +26,7 @@ logging.basicConfig(format='[%(levelname)-8s] %(message)s')
 log.setLevel(logging.DEBUG)
 
 DEFAULT_PEBBLE_ID = None #Triggers autodetection on unix-like systems
-DEBUG_PROTOCOL = False	
+DEBUG_PROTOCOL = True	
 
 
 class PebbleBundle(object):
@@ -887,11 +887,26 @@ class Pebble(object):
 
 class AppMessage(object):
 # tools to build a valid app message
+	#TODO: Refactor this in to a clean object representation instead of static utility functions.
+
 	tuple_datatypes = {
 		"BYTE_ARRAY": b'\x00',
 		"CSTRING": b'\x01',
 		"UINT": b'\x02',
 		"INT": b'\x03'
+	}
+
+	struct_to_tuple_type = {
+		'P':'BYTE_ARRAY',
+		's':'CSTRING',
+		'b':'INT',
+		'h':'INT',
+		'i':'INT',
+		'q':'INT',
+		'B':'UINT',
+		'H':'UINT',
+		'I':'UINT',
+		'Q':'UINT',
 	}
 
 	app_messages = {
@@ -902,10 +917,10 @@ class AppMessage(object):
 	}
 
 	def read_byte_array(v_type, v_len, data):
-		return array.array('B',data)
+		return (array.array('B',data), "%sP" % v_len)
 
 	def read_cstring(v_type, v_len, data):
-		return data
+		return (data, "%ss" % v_len)
 
 	def read_uint(v_type, v_len, data):
 		types = {
@@ -914,7 +929,7 @@ class AppMessage(object):
 			4:"I",
 			8:"Q"
 		}
-		return unpack("<%s" % types[v_len], data)[0]
+		return (unpack("<%s" % types[v_len], data)[0], types[v_len])
 
 	def read_int(v_type, v_len, data):
 		types = {
@@ -923,7 +938,7 @@ class AppMessage(object):
 			4:"i",
 			8:"q"
 		}
-		return unpack("<%s" % types[v_len], data)[0]
+		return (unpack("<%s" % types[v_len], data)[0], types[v_len])
 
 	tuple_readers = {
 		0:read_byte_array,
