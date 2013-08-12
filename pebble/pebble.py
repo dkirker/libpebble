@@ -820,8 +820,11 @@ class Pebble(object):
 
 	def _application_message_response(self, endpoint, data):
 
-		if data[0] == b'\x01':
+		if data[0] == b'\x01': #PUSH
 			(command, transaction, app_uuid, msg_dict) = AppMessage.read_message(data)
+
+			log.debug("ACKing transaction %x" % ord(transaction))
+			self._send_message("APPLICATION_MESSAGE", "\xFF%s" % transaction)
 
 			if app_uuid in self.bridges:
 				reply = self.bridges[app_uuid].process(msg_dict)
