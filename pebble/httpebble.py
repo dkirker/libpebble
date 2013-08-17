@@ -78,7 +78,10 @@ class HTTPebble(bridge.PebbleBridge):
 		response = urllib2.urlopen(req, json.dumps(parameters))
 
 		code = response.getcode()
-		data = json.load(response)
+		try:
+			data = json.load(response)
+		except ValueError:
+			data = {}
 
 		log.info("%d: %s" % (code, data))
 
