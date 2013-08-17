@@ -75,14 +75,17 @@ class HTTPebble(bridge.PebbleBridge):
 		req = urllib2.Request(uri)
 		req.add_header('Content-Type', 'application/json')
 		req.add_header('X-Pebble-ID', self._id)
-		response = urllib2.urlopen(req, json.dumps(parameters))
-
-		code = response.getcode()
+		
 		try:
+			response = urllib2.urlopen(req, json.dumps(parameters))
+			code = response.getcode()
 			data = json.load(response)
 			if type(data) != dict:
 				code = 0
 				raise ValueError("Server did not return a dictionary")
+		except urllib2.URLError:
+			code = 0
+			data = {}
 		except ValueError:
 			data = {}
 
