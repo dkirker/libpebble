@@ -78,7 +78,13 @@ class HTTPebble(bridge.PebbleBridge):
 		response = urllib2.urlopen(req, json.dumps(parameters))
 
 		code = response.getcode()
-		data = json.load(response)
+		try:
+			data = json.load(response)
+			if type(data) != dict:
+				code = 0
+				raise ValueError("Server did not return a dictionary")
+		except ValueError:
+			data = {}
 
 		log.info("%d: %s" % (code, data))
 
