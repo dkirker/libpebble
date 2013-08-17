@@ -80,6 +80,9 @@ class HTTPebble(bridge.PebbleBridge):
 		code = response.getcode()
 		try:
 			data = json.load(response)
+			if type(data) != dict:
+				code = 0
+				raise ValueError("Server did not return a dictionary")
 		except ValueError:
 			data = {}
 
