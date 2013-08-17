@@ -2,12 +2,14 @@
 
 import argparse
 import pebble as libpebble
+from pebble import httpebble
 import code
 import readline
 import rlcompleter
 
 def start_repl(pebble_id, lightblue, pair):
     pebble = libpebble.Pebble(pebble_id, using_lightblue=lightblue, pair_first=pair)
+    pebble.install_bridge(httpebble.HTTPebble)
     readline.set_completer(rlcompleter.Completer(locals()).complete)
     readline.parse_and_bind('tab:complete')
     code.interact(local=locals())
