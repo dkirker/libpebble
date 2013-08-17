@@ -62,7 +62,7 @@ class HTTPebble(bridge.PebbleBridge):
 	def http_url_key(self, uri, parameters):
 		#Strip type information
 		parameters = {x:parameters[x][0] for x in parameters}
-		uri = uri[0]
+		uri = uri[0][:-1]
 
 		cookie = parameters[HTTP_COOKIE_KEY]
 		app_id = parameters[HTTP_APP_ID_KEY]
