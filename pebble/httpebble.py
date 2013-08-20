@@ -83,10 +83,8 @@ class HTTPebble(bridge.PebbleBridge):
 			if type(data) != dict:
 				code = 0
 				raise ValueError("Server did not return a dictionary")
-		except urllib2.URLError:
+		except:
 			code = 0
-			data = {}
-		except ValueError:
 			data = {}
 
 		log.info("%d: %s" % (code, data))
